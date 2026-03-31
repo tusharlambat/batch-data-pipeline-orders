@@ -1,30 +1,62 @@
-# transform_orders.py
+from pyspark.sql.functions import col, to_date
+from src.utils.logger import get_logger
 
-import pandas as pd
-from src.config import CONFIG
+logger = get_logger(__name__)
 
+def transform_orders(df):
+    """
+    Transform raw orders data:
+    - Rename columns
+    - Change data types
+    - Create new business columns
+    """
 
-def transform(df):
-    try:
-        print("[TRANSFORM] Starting transformation...")
+    logger.info("Starting transformation step...")
 
-        # 1. Remove duplicates
-        df = df.drop_duplicates()
+    # ==============================
+    # 🔹 Rename Columns
+    # ==============================
+    df = df.withColumnRenamed("Order Id", "order_id") \
+           .withColumnRenamed("Order Date", "order_date") \
+           .withColumnRenamed("Ship Mode", "ship_mode") \
+           .withColumnRenamed("Segment", "segment") \
+           .withColumnRenamed("Country", "country") \
+           .withColumnRenamed("City", "city") \
+           .withColumnRenamed("State", "state") \
+           .withColumnRenamed("Postal Code", "postal_code") \
+           .withColumnRenamed("Region", "region") \
+           .withColumnRenamed("Category", "category") \
+           .withColumnRenamed("Sub Category", "sub_category") \
+           .withColumnRenamed("Product Id", "product_id") \
+           .withColumnRenamed("Cost Price", "cost_price") \
+           .withColumnRenamed("List Price", "list_price") \
+           .withColumnRenamed("Quantity", "quantity") \
+           .withColumnRenamed("Discount Percent", "discount_percent")
 
-        # 2. Handle missing values
-        df = df.dropna()
+    logger.info("Columns renamed successfully")
 
-        # 3. Convert order_date to datetime
-        df["order_date"] = pd.to_datetime(df["order_date"])
+    # ==============================
+    # 🔹 Convert Data Types
+    # ==============================
+    df = df.withColumn("order_date", to_date(col("order_date"), "MM/dd/yyyy"))
 
-        # 4. Add new column (example)
-        df["order_year"] = df["order_date"].dt.year
+    df = df.withColumn("cost_price", col("cost_price").cast("double")) \
+           .withColumn("list_price", col("list_price").cast("double")) \
+           .withColumn("quantity", col("quantity").cast("int")) \
+           .withColumn("discount_percent", col("discount_percent").cast("double"))
 
-        print("[TRANSFORM] Transformation complete")
-        print(df.head())
+    logger.info("Data types converted")
 
-        return df
+    # ==============================
+    # 🔹 Business Logic
+    # ==============================
+    df = df.withColumn(
+        "final_price",
+        col("list_price") * (1 - col("discount_percent") / 100)
+    )
 
-    except Exception as e:
-        print(f"[TRANSFORM] Error: {e}")
-        raise
+    logger.info("Business column 'final_price' created")
+
+    logger.info("Transformation completed successfully")
+
+    return df

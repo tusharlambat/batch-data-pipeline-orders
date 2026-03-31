@@ -1,27 +1,18 @@
-# extract_orders.py
+from src.utils.spark_session import get_spark_session
+from src.utils.config import RAW_DATA_PATH
 
-import pandas as pd
-from src.config import CONFIG
+def extract_orders():
+    """
+    Extract data from S3 (CSV) and return Spark DataFrame
+    """
 
+    # Create Spark session
+    spark = get_spark_session()
 
-def extract():
-    try:
-        # Get environment (dev/prod)
-        env = CONFIG["env"]
+    # Read CSV from S3
+    df = spark.read \
+        .option("header", True) \
+        .option("inferSchema", True) \
+        .csv(RAW_DATA_PATH)
 
-        # Get S3 raw data path
-        raw_path = CONFIG["paths"][env]["raw_data"]
-
-        print(f"[EXTRACT] Reading data from: {raw_path}")
-
-        # Read CSV from S3
-        df = pd.read_csv(raw_path)
-
-        print("[EXTRACT] Data read successfully")
-        print(df.head())
-
-        return df
-
-    except Exception as e:
-        print(f"[EXTRACT] Error: {e}")
-        raise
+    return df

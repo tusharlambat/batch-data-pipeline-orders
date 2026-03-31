@@ -1,21 +1,37 @@
 import snowflake.connector
-from src.utils.logger import logger
+from src.utils.config import SNOWFLAKE_CONFIG
+from src.utils.logger import get_logger
 
+logger = get_logger(__name__)
 
-def load_to_snowflake():
+def load_to_snowflake(df):
+    """
+    Load data into Snowflake table
+    """
 
-    logger.info("Connecting to Snowflake")
+    logger.info("Connecting to Snowflake...")
 
     conn = snowflake.connector.connect(
-        user="YOUR_USER",
-        password="YOUR_PASSWORD",
-        account="YOUR_ACCOUNT"
+        user=SNOWFLAKE_CONFIG["user"],
+        password=SNOWFLAKE_CONFIG["password"],
+        account=SNOWFLAKE_CONFIG["account"],
+        warehouse=SNOWFLAKE_CONFIG["warehouse"],
+        database=SNOWFLAKE_CONFIG["database"],
+        schema=SNOWFLAKE_CONFIG["schema"]
     )
 
     cursor = conn.cursor()
 
-    cursor.execute("COPY INTO orders_table FROM @s3_stage")
+    logger.info("Connection established. Loading data...")
 
-    logger.info("Snowflake load completed")
+    # ⚠️ Basic approach (for learning)
+    for row in df.collect():
+        cursor.execute(f"""
+            INSERT INTO {SNOWFLAKE_CONFIG['table']}
+            VALUES {tuple(row)}
+        """)
 
+    logger.info("Data successfully loaded into Snowflake")
+
+    cursor.close()
     conn.close()

@@ -1,23 +1,23 @@
-import json
 from datetime import datetime
-import os
+from src.utils.logger import get_logger
 
+logger = get_logger(__name__)
 
-def generate_report(pipeline_name, records_read, records_written, status):
+def generate_report(start_time, end_time, row_count):
+    """
+    Generate pipeline execution report
+    """
 
-    report = {
-        "pipeline_name": pipeline_name,
-        "run_time": str(datetime.now()),
-        "records_read": records_read,
-        "records_written": records_written,
-        "status": status
-    }
+    duration = end_time - start_time
 
-    # create report file name
-    report_file = f"reports/pipeline_report_{datetime.now().date()}.json"
+    report = f"""
+    ================= PIPELINE REPORT =================
+    Start Time   : {start_time}
+    End Time     : {end_time}
+    Duration     : {duration}
+    Rows Processed : {row_count}
+    Status       : SUCCESS
+    ==================================================
+    """
 
-    # write report
-    with open(report_file, "w") as f:
-        json.dump(report, f, indent=4)
-
-    print(f"Report generated at: {report_file}")
+    logger.info(report)

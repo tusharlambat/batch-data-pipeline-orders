@@ -1,47 +1,71 @@
-from pyspark.sql import SparkSession
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-from config.config import CONFIG
+from datetime import datetime
+
 from src.extraction.extract_orders import extract_orders
 from src.transformation.transform_orders import transform_orders
-from src.loading.load_orders import load_orders
-from src.utils.logger import logger
+from src.validation.validate_orders import validate_orders
+from src.loading.load_to_s3 import load_to_s3
+from src.loading.load_to_snowflake import load_to_snowflake
+
+from src.utils.logger import get_logger
+from src.utils.report_generator import generate_report
+
+logger = get_logger(__name__)
 
 
-def main():
-    logger.info("Pipeline started")
+def run_pipeline():
+    """
+    Main ETL pipeline:
+    Extract → Transform → Validate → Load → Report
+    """
 
-    # ✅ Create Spark session
-    spark = SparkSession.builder \
-        .appName("Order Pipeline") \
-        .getOrCreate()
-
-    # ✅ Environment-based config
-    env = os.getenv("ENV", "dev")  # default = dev
-
-    raw_path = CONFIG["paths"][env]["raw_data"]
-    clean_path = CONFIG["paths"][env]["clean_data"]
+    start_time = datetime.now()
+    logger.info("🚀 Pipeline started")
 
     try:
-        # 🔹 Extract
-        df = extract_orders(spark, raw_path)
+        # ==============================
+        # 🔹 EXTRACT
+        # ==============================
+        logger.info("Starting extraction...")
+        df = extract_orders()
 
-        # 🔹 Transform
+        # ==============================
+        # 🔹 TRANSFORM
+        # ==============================
+        logger.info("Starting transformation...")
         df_transformed = transform_orders(df)
 
-        # 🔹 Load
-        load_orders(df_transformed, clean_path)
+        # ==============================
+        # 🔹 VALIDATE
+        # ==============================
+        logger.info("Starting validation...")
+        validate_orders(df_transformed)
 
-        logger.info("Pipeline completed successfully")
+        # ==============================
+        # 🔹 LOAD TO S3
+        # ==============================
+        logger.info("Loading data to S3...")
+        load_to_s3(df_transformed)
+
+        # ==============================
+        # 🔹 LOAD TO SNOWFLAKE
+        # ==============================
+        logger.info("Loading data to Snowflake...")
+        load_to_snowflake(df_transformed)
+
+        # ==============================
+        # 🔹 REPORT
+        # ==============================
+        end_time = datetime.now()
+        row_count = df_transformed.count()
+
+        generate_report(start_time, end_time, row_count)
+
+        logger.info("✅ Pipeline completed successfully")
 
     except Exception as e:
-        logger.error(f"Pipeline failed: {e}")
+        logger.error(f"❌ Pipeline failed: {str(e)}")
         raise
-
-    finally:
-        spark.stop()
 
 
 if __name__ == "__main__":
-    main()
+    run_pipeline()
