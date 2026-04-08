@@ -10,8 +10,6 @@ def load_to_s3(df):
 
     logger.info("Starting load to S3...")
 
-    df.write \
-        .mode("overwrite") \
-        .parquet(CLEANED_DATA_PATH)
-
+    df.write.mode("overwrite").parquet(CLEANED_DATA_PATH)
+  
     logger.info(f"Data successfully written to S3 at {CLEANED_DATA_PATH}")

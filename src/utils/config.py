@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # ==============================
@@ -6,20 +7,21 @@ from dotenv import load_dotenv
 # ==============================
 
 ENV = os.getenv("ENV", "dev")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ENV_FILE = PROJECT_ROOT / f".env.{ENV}"
 
-if ENV == "prod":
-    load_dotenv(".env.prod")
-else:
-    load_dotenv(".env.dev")
-
-# ==============================
-# 🔹 S3 CONFIG
-# ==============================
+# Resolve the env file from the project root so Airflow can load it
+# regardless of the process working directory.
+load_dotenv(dotenv_path=ENV_FILE)
 
 BUCKET_NAME = os.getenv("S3_BUCKET")
 
-RAW_DATA_PATH = f"s3://{BUCKET_NAME}/{ENV}/raw_data/orders.csv"
-CLEANED_DATA_PATH = f"s3://{BUCKET_NAME}/{ENV}/cleaned_data/"
+# 🔥 For Spark (read/write)
+RAW_DATA_PATH = f"s3a://{BUCKET_NAME}/{ENV}/raw_data/orders.csv"
+CLEANED_DATA_PATH = f"s3a://{BUCKET_NAME}/{ENV}/cleaned_data/"
+
+# 🔥 For Snowflake (important)
+SNOWFLAKE_S3_PATH = f"s3://{BUCKET_NAME}/{ENV}/cleaned_data/"
 
 # ==============================
 # 🔹 SNOWFLAKE CONFIG

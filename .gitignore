@@ -4,3 +4,6 @@ __pycache__/
 venv/
 airflow.db
 logs/
+
+# Auxly - AI Task Management (internal data)
+.auxly/

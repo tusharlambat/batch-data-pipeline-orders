@@ -1,2 +1,14 @@
 {
+  "mcpServers": {
+    "auxly": {
+      "command": "node",
+      "args": [
+        "/home/tusharlmbt/.vscode-server/extensions/tzamun-arabia.auxly-extension-0.1.8/dist/mcp-server/index.js"
+      ],
+      "env": {
+        "AUXLY_WORKSPACE_PATH": "/home/tusharlmbt/Batch_data_pipeline_orders_project1",
+        "AUXLY_API_URL": "https://auxly.tzamun.com"
+      }
+    }
+  }
 }

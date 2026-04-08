@@ -1,8 +1,4 @@
-from pyspark.sql import SparkSession
-
-spark = SparkSession.builder.getOrCreate()
-
-def test_load_to_s3():
+def test_load_to_s3(spark):
     data = [("1", "100")]
     columns = ["order_id", "amount"]
 

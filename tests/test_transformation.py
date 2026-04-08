@@ -1,11 +1,6 @@
-from pyspark.sql import SparkSession
 from src.transformation.transform_orders import transform_orders
 
-# create spark session
-spark = SparkSession.builder.getOrCreate()
-
-
-def test_transform_orders():
+def test_transform_orders(spark):
     # ✅ Dummy data (same as raw schema)
     data = [
         ("1", "01/03/2023", "Second Class", "Consumer", "USA", "NY",
@@ -48,3 +43,4 @@ def test_transform_orders():
     assert "cost_price" in df_transformed.columns
     assert "list_price" in df_transformed.columns
     assert "quantity" in df_transformed.columns
+    assert df_transformed.filter("order_date IS NULL").count() == 0
